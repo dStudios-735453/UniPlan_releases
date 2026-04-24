@@ -1,27 +1,27 @@
 {
-  "version": "0.1.0",
-  "notes": "Fixed some bugs and added themes!",
-  "pub_date": "2026-02-07T12:00:00Z",
+  "version": "0.0.1",
+  "notes": "Initial alpha release",
+  "pub_date": "2026-02-17T12:00:00Z",
   "platforms": {
-    "windows-x86_64_msi": {
-      "signature": "CONTENT_OF_THE_SIG_FILE",
-      "url": "https://github.com/735453/UniPlan_releases/releases/download/v0.1.0/UniPlan_0.1.0_x64.msi"
-    },
-    "windows-x86_64_exe": {
-      "signature": "CONTENT_OF_THE_SIG_FILE",
-      "url": "https://github.com/735453/UniPlan_releases/releases/download/v0.1.0/UniPlan_0.1.0_x64.exe"
+    "windows-x86_64": {
+      "signature": "<sig from sig file>",
+      "url": "<link to .msi>"
     },
     "darwin-x86_64": {
-      "signature": "CONTENT_OF_THE_SIG_FILE",
-      "url": "https://github.com/735453/UniPlan_releases/releases/download/v0.1.0/UniPlan_0.1.0_x64.app"
+      "signature": "<sig from sig file>",
+      "url": "<link to x86_64 .dmg>"
     },
-    "darwin-arm64": {
-      "signature": "CONTENT_OF_THE_SIG_FILE",
-      "url": "https://github.com/735453/UniPlan_releases/releases/download/v0.1.0/UniPlan_0.1.0_aarch64.app"
+    "darwin-aarch64": {
+      "signature": "<sig from sig file>",
+      "url": "<link to arm .app>"
     },
     "linux-x86_64": {
-      "signature": "CONTENT_OF_THE_SIG_FILE",
-      "url": "https://github.com/735453/UniPlan_releases/releases/download/v0.1.0/UniPlan_0.1.0_amd64.AppImage"
+      "signature": "<sig from sig file>",
+      "url": "<link to appimage>"
+    },
+    "linux-aarch64": {
+      "signature": "<sig from sig file>",
+      "url": "<link to arm appimage>"
     }
   }
 }
