@@ -44,7 +44,7 @@ on:
         type: boolean
         default: true
       update_metadata:
-        description: "Update releases.json (Desktop Autoupdater)"
+        description: "Update latest.json (Desktop Autoupdater)"
         type: boolean
         default: true
 
@@ -286,7 +286,7 @@ jobs:
         with:
           path: signatures
 
-      - name: Update releases.json
+      - name: Update latest.json
         run: |
           VERSION="${{ needs.prepare.outputs.version }}"
           PUB_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
@@ -311,15 +311,15 @@ jobs:
               "darwin-x86_64": { "signature": $mac_x64_sig, "url": $mac_x64_url }
             }')
 
-          # Update releases.json using jq
+          # Update latest.json using jq
           jq --arg ver "$VERSION" --arg date "$PUB_DATE" --argjson platforms "$PLATFORMS" \
             '.version = $ver | .pub_date = $date | .platforms = $platforms' \
-            releases.json > releases.json.tmp && mv releases.json.tmp releases.json
+            latest.json > latest.json.tmp && mv latest.json.tmp latest.json
 
       - name: Commit and push changes
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add releases.json
-          git commit -m "chore: update releases.json for ${{ needs.prepare.outputs.tag_name }}"
+          git add latest.json
+          git commit -m "chore: update latest.json for ${{ needs.prepare.outputs.tag_name }}"
           git push
