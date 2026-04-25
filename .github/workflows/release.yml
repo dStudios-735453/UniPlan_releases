@@ -111,9 +111,9 @@ jobs:
             target: aarch64-unknown-linux-gnu
             build_flag: ${{ github.event.inputs.build_linux_arm64 }}
     runs-on: ${{ matrix.os }}
-    if: matrix.build_flag == 'true'
     steps:
       - name: Checkout Source
+        if: matrix.build_flag == 'true'
         uses: actions/checkout@v4
         with:
           repository: dStudios-735453/UniPlan
@@ -121,6 +121,7 @@ jobs:
           path: source
 
       - name: Setup Node
+        if: matrix.build_flag == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -128,21 +129,24 @@ jobs:
           cache-dependency-path: source/package.json
 
       - name: Install Rust
+        if: matrix.build_flag == 'true'
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
 
       - name: Install Linux dependencies
-        if: matrix.os == 'ubuntu-latest' || matrix.os == 'ubuntu-latest-arm'
+        if: (matrix.os == 'ubuntu-latest' || matrix.os == 'ubuntu-latest-arm') && matrix.build_flag == 'true'
         run: |
           sudo apt-get update
           sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf
 
       - name: Install NPM dependencies
+        if: matrix.build_flag == 'true'
         working-directory: source
         run: npm install
 
       - name: Build Tauri App
+        if: matrix.build_flag == 'true'
         working-directory: source
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
@@ -150,6 +154,7 @@ jobs:
         run: npx tauri build --target ${{ matrix.target }}
 
       - name: Upload Artifacts
+        if: matrix.build_flag == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: tauri-build-${{ matrix.platform }}
@@ -173,9 +178,9 @@ jobs:
             os: macos-latest
             build_flag: ${{ github.event.inputs.build_ios }}
     runs-on: ${{ matrix.os }}
-    if: matrix.build_flag == 'true'
     steps:
       - name: Checkout Source
+        if: matrix.build_flag == 'true'
         uses: actions/checkout@v4
         with:
           repository: dStudios-735453/UniPlan
@@ -183,6 +188,7 @@ jobs:
           path: source
 
       - name: Setup Node
+        if: matrix.build_flag == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -190,17 +196,19 @@ jobs:
           cache-dependency-path: source/package.json
 
       - name: Install NPM dependencies
+        if: matrix.build_flag == 'true'
         working-directory: source
         run: npm install
 
       - name: Setup Expo
+        if: matrix.build_flag == 'true'
         uses: expo/expo-github-action@v8
         with:
           expo-version: latest
           eas-cache: true
 
       - name: Build Android (Unsigned APK)
-        if: matrix.platform == 'android'
+        if: matrix.platform == 'android' && matrix.build_flag == 'true'
         working-directory: source
         run: |
           npx expo prebuild --platform android
@@ -208,14 +216,14 @@ jobs:
           ./gradlew assembleRelease
 
       - name: Build iOS (Unsigned .app / Simulator Build)
-        if: matrix.platform == 'ios'
+        if: matrix.platform == 'ios' && matrix.build_flag == 'true'
         working-directory: source
         run: |
           npx expo prebuild --platform ios
           xcodebuild -workspace ios/UniPlan.xcworkspace -scheme UniPlan -configuration Release -sdk iphoneos -derivedDataPath build -quiet
 
       - name: Package iOS App
-        if: matrix.platform == 'ios'
+        if: matrix.platform == 'ios' && matrix.build_flag == 'true'
         working-directory: source
         run: |
           mkdir -p Payload
@@ -224,14 +232,14 @@ jobs:
           rm -rf Payload
 
       - name: Upload Android Artifact
-        if: matrix.platform == 'android'
+        if: matrix.platform == 'android' && matrix.build_flag == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: mobile-build-android
           path: source/android/app/build/outputs/apk/release/*.apk
 
       - name: Upload iOS Artifact
-        if: matrix.platform == 'ios'
+        if: matrix.platform == 'ios' && matrix.build_flag == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: mobile-build-ios
@@ -291,12 +299,8 @@ jobs:
           }
           
           WIN_X64_SIG=$(get_sig "*.msi.zip.sig") # Tauri updater often uses zip for msi
-          # Note: Adjusting sig detection based on Tauri's actual output structure
           
-          # This part requires careful shell scripting to update JSON. 
-          # jq is pre-installed on ubuntu-latest.
-          
-          # We'll construct the platforms object dynamically
+          # Construct the platforms object dynamically
           PLATFORMS=$(jq -n \
             --arg win_x64_sig "$(find signatures -name "*.msi.zip.sig" -exec cat {} \; | head -n 1)" \
             --arg win_x64_url "${REPO_URL}/UniPlan_${VERSION}_x64_en-US.msi.zip" \
@@ -308,8 +312,8 @@ jobs:
             }')
           
           # Update releases.json using jq
-          jq --arg ver "$VERSION" --arg date "$PUB_DATE" --argjson platforms "$PLATFORMS" 
-            '.version = $ver | .pub_date = $date | .platforms = $platforms'
+          jq --arg ver "$VERSION" --arg date "$PUB_DATE" --argjson platforms "$PLATFORMS" \
+            '.version = $ver | .pub_date = $date | .platforms = $platforms' \
             releases.json > releases.json.tmp && mv releases.json.tmp releases.json
 
       - name: Commit and push changes
