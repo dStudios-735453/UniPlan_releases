@@ -4,47 +4,47 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'App version (e.g., 1.0.0)'
+        description: "App version (e.g., 1.0.0)"
         required: true
-        default: '0.0.1'
+        default: "0.0.1"
       build_newest_code:
-        description: 'Build from latest code (alpha release)'
+        description: "Build from latest code (alpha release)"
         type: boolean
         default: false
       build_android:
-        description: 'Build Android APK'
+        description: "Build Android APK"
         type: boolean
         default: true
       build_ios:
-        description: 'Build iOS IPA'
+        description: "Build iOS IPA"
         type: boolean
         default: true
       build_win_x64:
-        description: 'Build Windows x64'
+        description: "Build Windows x64"
         type: boolean
         default: true
       build_win_arm64:
-        description: 'Build Windows ARM64'
+        description: "Build Windows ARM64"
         type: boolean
         default: true
       build_mac_x64:
-        description: 'Build macOS x64'
+        description: "Build macOS x64"
         type: boolean
         default: true
       build_mac_arm64:
-        description: 'Build macOS ARM64'
+        description: "Build macOS ARM64"
         type: boolean
         default: true
       build_linux_x64:
-        description: 'Build Linux x64'
+        description: "Build Linux x64"
         type: boolean
         default: true
       build_linux_arm64:
-        description: 'Build Linux ARM64'
+        description: "Build Linux ARM64"
         type: boolean
         default: true
       update_metadata:
-        description: 'Update releases.json (Desktop Autoupdater)'
+        description: "Update releases.json (Desktop Autoupdater)"
         type: boolean
         default: true
 
@@ -61,7 +61,7 @@ jobs:
           VERSION="${{ github.event.inputs.version }}"
           IF_ALPHA="${{ github.event.inputs.build_newest_code }}"
           DATE_TIME=$(date +'%Y.%m.%d-%H%M')
-          
+
           if [ "$IF_ALPHA" = "true" ]; then
             RELEASE_TITLE="${DATE_TIME}-alpha"
             TAG_NAME="v${DATE_TIME}-alpha"
@@ -69,7 +69,7 @@ jobs:
             RELEASE_TITLE="v$VERSION"
             TAG_NAME="v$VERSION"
           fi
-          
+
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "release_title=$RELEASE_TITLE" >> $GITHUB_OUTPUT
           echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
@@ -91,7 +91,7 @@ jobs:
             target: aarch64-pc-windows-msvc
             build_flag: ${{ github.event.inputs.build_win_arm64 }}
           - platform: mac_x64
-            os: macos-13
+            os: macos-26-intel
             arch: x86_64
             target: x86_64-apple-darwin
             build_flag: ${{ github.event.inputs.build_mac_x64 }}
@@ -124,8 +124,8 @@ jobs:
         if: matrix.build_flag == 'true'
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'npm'
+          node-version: 25
+          cache: "npm"
           cache-dependency-path: source/package.json
 
       - name: Install Rust
@@ -192,7 +192,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          cache: "npm"
           cache-dependency-path: source/package.json
 
       - name: Install NPM dependencies
@@ -292,14 +292,14 @@ jobs:
           PUB_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           TAG="${{ needs.prepare.outputs.tag_name }}"
           REPO_URL="https://github.com/${{ github.repository }}/releases/download/${TAG}"
-          
+
           # Helper function to get signature content
           get_sig() {
             find signatures -name "$1" -exec cat {} \; || echo ""
           }
-          
+
           WIN_X64_SIG=$(get_sig "*.msi.zip.sig") # Tauri updater often uses zip for msi
-          
+
           # Construct the platforms object dynamically
           PLATFORMS=$(jq -n \
             --arg win_x64_sig "$(find signatures -name "*.msi.zip.sig" -exec cat {} \; | head -n 1)" \
@@ -310,7 +310,7 @@ jobs:
               "windows-x86_64": { "signature": $win_x64_sig, "url": $win_x64_url },
               "darwin-x86_64": { "signature": $mac_x64_sig, "url": $mac_x64_url }
             }')
-          
+
           # Update releases.json using jq
           jq --arg ver "$VERSION" --arg date "$PUB_DATE" --argjson platforms "$PLATFORMS" \
             '.version = $ver | .pub_date = $date | .platforms = $platforms' \
