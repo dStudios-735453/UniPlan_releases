@@ -178,6 +178,7 @@ jobs:
             source/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.app.tar.gz.sig
             source/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.AppImage
             source/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.AppImage.sig
+          retention-days: 2
 
   build-mobile:
     needs: prepare
@@ -247,7 +248,12 @@ jobs:
         working-directory: source
         run: |
           npx expo prebuild --platform ios
-          xcodebuild -workspace ios/UniPlan.xcworkspace -scheme UniPlan -configuration Release -sdk iphoneos -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" -quiet
+          # Aggressively disable code signing in the project file
+          sed -i '' 's/DevelopmentTeam = .*/DevelopmentTeam = "";/g' ios/UniPlan.xcodeproj/project.pbxproj
+          sed -i '' 's/CODE_SIGN_STYLE = Automatic;/CODE_SIGN_STYLE = Manual;/g' ios/UniPlan.xcodeproj/project.pbxproj
+          sed -i '' 's/CODE_SIGN_IDENTITY = "Apple Development";/CODE_SIGN_IDENTITY = "";/g' ios/UniPlan.xcodeproj/project.pbxproj
+          sed -i '' 's/CODE_SIGN_IDENTITY\[sdk=iphoneos\*\] = "Apple Development";/CODE_SIGN_IDENTITY = "";/g' ios/UniPlan.xcodeproj/project.pbxproj
+          xcodebuild -workspace ios/UniPlan.xcworkspace -scheme UniPlan -configuration Release -sdk iphoneos -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" EXPANDED_CODE_SIGN_IDENTITY="" -quiet
 
       - name: Package iOS App
         if: matrix.platform == 'ios' && matrix.build_flag == 'true'
@@ -264,6 +270,7 @@ jobs:
         with:
           name: mobile-build-android
           path: source/android/app/build/outputs/apk/release/*.apk
+          retention-days: 2
 
       - name: Upload iOS Artifact
         if: matrix.platform == 'ios' && matrix.build_flag == 'true'
@@ -271,6 +278,7 @@ jobs:
         with:
           name: mobile-build-ios
           path: source/UniPlan-unsigned.ipa
+          retention-days: 2
 
   create-release:
     needs: [prepare, build-desktop, build-mobile]
@@ -314,10 +322,10 @@ jobs:
       - name: Checkout Releases Repo
         uses: actions/checkout@v4
 
-      - name: Download .sig files
+      - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
-          path: signatures
+          path: all_artifacts
 
       - name: Update latest.json
         run: |
@@ -326,22 +334,62 @@ jobs:
           TAG="${{ needs.prepare.outputs.tag_name }}"
           REPO_URL="https://github.com/${{ github.repository }}/releases/download/${TAG}"
 
-          # Helper function to get signature content
+          # Helper to extract signature from file
           get_sig() {
-            find signatures -name "$1" -exec cat {} \; || echo ""
+            local pattern="$1"
+            local sig_file=$(find all_artifacts -name "$pattern" | head -n 1)
+            if [ -f "$sig_file" ]; then
+              cat "$sig_file"
+            else
+              echo ""
+            fi
           }
 
-          WIN_X64_SIG=$(get_sig "*.msi.zip.sig") # Tauri updater often uses zip for msi
+          # Helper to get filename for URL
+          get_filename() {
+            local pattern="$1"
+            local file_path=$(find all_artifacts -name "$pattern" | grep -v "\.sig$" | head -n 1)
+            if [ -n "$file_path" ]; then
+              basename "$file_path"
+            else
+              echo ""
+            fi
+          }
+
+          # Get signatures and filenames for each platform
+          W_X64_SIG=$(get_sig "UniPlan*x64*en-US.msi.sig")
+          W_X64_FILE=$(get_filename "UniPlan*x64*en-US.msi")
+          
+          W_ARM_SIG=$(get_sig "UniPlan*arm64*en-US.msi.sig")
+          W_ARM_FILE=$(get_filename "UniPlan*arm64*en-US.msi")
+
+          D_X64_SIG=$(get_sig "UniPlan*x86_64.app.tar.gz.sig")
+          D_X64_FILE=$(get_filename "UniPlan*x86_64.app.tar.gz")
+
+          D_ARM_SIG=$(get_sig "UniPlan*aarch64.app.tar.gz.sig")
+          D_ARM_FILE=$(get_filename "UniPlan*aarch64.app.tar.gz")
+
+          L_X64_SIG=$(get_sig "UniPlan*amd64.AppImage.sig")
+          L_X64_FILE=$(get_filename "UniPlan*amd64.AppImage")
+
+          L_ARM_SIG=$(get_sig "UniPlan*aarch64.AppImage.sig")
+          L_ARM_FILE=$(get_filename "UniPlan*aarch64.AppImage")
 
           # Construct the platforms object dynamically
           PLATFORMS=$(jq -n \
-            --arg win_x64_sig "$(find signatures -name "*.msi.zip.sig" -exec cat {} \; | head -n 1)" \
-            --arg win_x64_url "${REPO_URL}/UniPlan_${VERSION}_x64_en-US.msi.zip" \
-            --arg mac_x64_sig "$(find signatures -name "*.dmg.tar.gz.sig" -exec cat {} \; | head -n 1)" \
-            --arg mac_x64_url "${REPO_URL}/UniPlan.app.tar.gz" \
+            --arg w_x64_sig "$W_X64_SIG" --arg w_x64_url "${REPO_URL}/${W_X64_FILE}" \
+            --arg w_arm_sig "$W_ARM_SIG" --arg w_arm_url "${REPO_URL}/${W_ARM_FILE}" \
+            --arg d_x64_sig "$D_X64_SIG" --arg d_x64_url "${REPO_URL}/${D_X64_FILE}" \
+            --arg d_arm_sig "$D_ARM_SIG" --arg d_arm_url "${REPO_URL}/${D_ARM_FILE}" \
+            --arg l_x64_sig "$L_X64_SIG" --arg l_x64_url "${REPO_URL}/${L_X64_FILE}" \
+            --arg l_arm_sig "$L_ARM_SIG" --arg l_arm_url "${REPO_URL}/${L_ARM_FILE}" \
             '{ 
-              "windows-x86_64": { "signature": $win_x64_sig, "url": $win_x64_url },
-              "darwin-x86_64": { "signature": $mac_x64_sig, "url": $mac_x64_url }
+              "windows-x86_64": { "signature": $w_x64_sig, "url": $w_x64_url },
+              "windows-aarch64": { "signature": $w_arm_sig, "url": $w_arm_url },
+              "darwin-x86_64": { "signature": $d_x64_sig, "url": $d_x64_url },
+              "darwin-aarch64": { "signature": $d_arm_sig, "url": $d_arm_url },
+              "linux-x86_64": { "signature": $l_x64_sig, "url": $l_x64_url },
+              "linux-aarch64": { "signature": $l_arm_sig, "url": $l_arm_url }
             }')
 
           # Update latest.json using jq
