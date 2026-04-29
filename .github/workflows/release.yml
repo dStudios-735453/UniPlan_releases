@@ -55,9 +55,6 @@ jobs:
   check-runner:
     runs-on: ubuntu-latest
     timeout-minutes: 1
-    permissions:
-      contents: read
-      actions: read
     outputs:
       status: ${{ steps.check.outcome.status }}
     steps:
@@ -65,7 +62,7 @@ jobs:
         shell: bash
         continue-on-error: true
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.RUNNERACCESS }}
         run: |
           ONLINE=$(gh api repos/${{ github.repository }}/actions/runners \
             --jq '.runners[] | select(.labels[].name == "self-hosted" and .status == "online") | .name' | head -n 1)
