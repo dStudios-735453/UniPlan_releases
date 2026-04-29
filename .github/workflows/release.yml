@@ -78,7 +78,7 @@ jobs:
 
   prepare:
     needs: check-runner
-    runs-on: ${{ (needs.check-runner.result == 'success') && 'self-hosted' || 'ubuntu-latest' }}
+    runs-on: ${{ (needs.check-runner.outputs.status == 'success') && 'self-hosted' || 'ubuntu-latest' }}
     outputs:
       version: ${{ steps.vars.outputs.version }}
       release_title: ${{ steps.vars.outputs.release_title }}
@@ -110,12 +110,12 @@ jobs:
       matrix:
         include:
           - platform: win_x64
-            os: ${{ (needs.check-runner.result == 'success') && 'self-hosted' || 'windows-latest' }}
+            os: ${{ (needs.check-runner.outputs.status == 'success') && 'self-hosted' || 'windows-latest' }}
             arch: x86_64
             target: x86_64-pc-windows-msvc
             build_flag: ${{ github.event.inputs.build_win_x64 }}
           - platform: win_arm64
-            os: ${{ (needs.check-runner.result == 'success') && 'self-hosted' || 'windows-latest' }}
+            os: ${{ (needs.check-runner.outputs.status == 'success') && 'self-hosted' || 'windows-latest' }}
             arch: arm64
             target: aarch64-pc-windows-msvc
             build_flag: ${{ github.event.inputs.build_win_arm64 }}
@@ -214,7 +214,7 @@ jobs:
       matrix:
         include:
           - platform: android
-            os: ${{ (needs.check-runner.result == 'success') && 'self-hosted' || 'ubuntu-latest' }}
+            os: ${{ (needs.check-runner.outputs.status == 'success') && 'self-hosted' || 'ubuntu-latest' }}
             build_flag: ${{ github.event.inputs.build_android }}
           - platform: ios
             os: macos-latest
@@ -343,7 +343,7 @@ jobs:
 
   update-metadata:
     needs: [check-runner, prepare, create-release]
-    runs-on: ${{ (needs.check-runner.result == 'success') && 'self-hosted' || 'ubuntu-latest' }}
+    runs-on: ${{ (needs.check-runner.outputs.status == 'success') && 'self-hosted' || 'ubuntu-latest' }}
     if: always() && github.event.inputs.update_metadata == 'true' && needs.create-release.result == 'success'
     steps:
       - name: Checkout Releases Repo
