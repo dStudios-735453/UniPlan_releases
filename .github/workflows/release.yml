@@ -52,8 +52,19 @@ on:
         default: true
 
 jobs:
-  prepare-local:
+  check-runner:
     runs-on: self-hosted
+    timeout-minutes: 1
+    outputs:
+      status: ${{ steps.check.outcome }}
+    steps:
+      - id: check
+        continue-on-error: true
+        run: echo "Runner is online"
+
+  prepare:
+    needs: check-runner
+    runs-on: ${{ (needs.check-runner.result == 'success') && 'self-hosted' || 'ubuntu-latest' }}
     outputs:
       version: ${{ steps.vars.outputs.version }}
       release_title: ${{ steps.vars.outputs.release_title }}
@@ -77,151 +88,19 @@ jobs:
           echo "release_title=$RELEASE_TITLE" >> $GITHUB_OUTPUT
           echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
 
-  prepare-cloud:
-    needs: prepare-local
-    if: failure()
-    runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.vars.outputs.version }}
-      release_title: ${{ steps.vars.outputs.release_title }}
-      tag_name: ${{ steps.vars.outputs.tag_name }}
-    steps:
-      - id: vars
-        run: |
-          VERSION="${{ github.event.inputs.version }}"
-          IF_ALPHA="${{ github.event.inputs.build_newest_code }}"
-          DATE_TIME=$(date +'%d.%m.%Y-%H%M')
-
-          if [ "$IF_ALPHA" = "true" ]; then
-            RELEASE_TITLE="${DATE_TIME}"
-            TAG_NAME="v${DATE_TIME}"
-          else
-            RELEASE_TITLE="v$VERSION"
-            TAG_NAME="v$VERSION"
-          fi
-
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "release_title=$RELEASE_TITLE" >> $GITHUB_OUTPUT
-          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
-
-  build-desktop-local:
-    needs: [prepare-local, prepare-cloud]
-    if: always() && (needs.prepare-local.result == 'success' || needs.prepare-cloud.result == 'success')
+  build-desktop:
+    needs: [check-runner, prepare]
     strategy:
       fail-fast: false
       matrix:
         include:
           - platform: win_x64
-            os: self-hosted
+            os: ${{ (needs.check-runner.result == 'success') && 'self-hosted' || 'windows-latest' }}
             arch: x86_64
             target: x86_64-pc-windows-msvc
             build_flag: ${{ github.event.inputs.build_win_x64 }}
-          - platform: win_arm64
-            os: windows-11-arm
-            arch: arm64
-            target: aarch64-pc-windows-msvc
-            build_flag: ${{ github.event.inputs.build_win_arm64 }}
-          - platform: mac_x64
-            os: macos-latest
-            arch: x86_64
-            target: x86_64-apple-darwin
-            build_flag: ${{ github.event.inputs.build_mac_x64 }}
-          - platform: mac_arm64
-            os: macos-latest
-            arch: aarch64
-            target: aarch64-apple-darwin
-            build_flag: ${{ github.event.inputs.build_mac_arm64 }}
-          - platform: linux_x64
-            os: ubuntu-latest
-            arch: x86_64
-            target: x86_64-unknown-linux-gnu
-            build_flag: ${{ github.event.inputs.build_linux_x64 }}
-          - platform: linux_arm64
-            os: ubuntu-24.04-arm
-            arch: aarch64
-            target: aarch64-unknown-linux-gnu
-            build_flag: ${{ github.event.inputs.build_linux_arm64 }}
-    runs-on: ${{ matrix.os }}
-    steps:
-      - name: Checkout Source
-        if: matrix.build_flag == 'true'
-        uses: actions/checkout@v4
-        with:
-          repository: dStudios-735453/UniPlan
-          token: ${{ secrets.UNIPLAN_SOURCE_GITHUB }}
-          path: source
-
-      - name: Setup Node
-        if: matrix.build_flag == 'true'
-        uses: actions/setup-node@v4
-        with:
-          node-version: 25
-          cache: "npm"
-          cache-dependency-path: source/package.json
-
-      - name: Install Rust
-        if: matrix.build_flag == 'true'
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.target }}
-
-      - name: Rust Cache
-        if: matrix.build_flag == 'true'
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: source/src-tauri -> target
-
-      - name: Install Linux dependencies
-        if: (matrix.os == 'ubuntu-latest' || matrix.os == 'ubuntu-24.04-arm') && matrix.build_flag == 'true'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
-
-      - name: Install NPM dependencies
-        if: matrix.build_flag == 'true'
-        working-directory: source
-        run: npm install --legacy-peer-deps
-
-      - name: Build Tauri App
-        if: matrix.build_flag == 'true'
-        working-directory: source
-        env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-        run: npx tauri build --target ${{ matrix.target }}
-
-      - name: Upload Artifacts
-        if: matrix.build_flag == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: tauri-build-${{ matrix.platform }}-local
-          path: |
-            source/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.msi
-            source/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.msi.sig
-            source/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.exe
-            source/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.exe.sig
-            source/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.dmg
-            source/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.app
-            source/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.app.tar.gz
-            source/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.app.tar.gz.sig
-            source/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.AppImage
-            source/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.AppImage.sig
-          retention-days: 2
-
-  build-desktop-cloud:
-    needs: [prepare-local, prepare-cloud, build-desktop-local]
-    if: failure() && (needs.prepare-local.result == 'success' || needs.prepare-cloud.result == 'success')
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
           - platform: win_x64
-            os: windows-latest
-            arch: x86_64
-            target: x86_64-pc-windows-msvc
-            build_flag: ${{ github.event.inputs.build_win_x64 }}
-          - platform: win_arm64
-            os: windows-11-arm
+            os: ${{ (needs.check-runner.result == 'success') && 'self-hosted' || 'windows-latest' }}
             arch: arm64
             target: aarch64-pc-windows-msvc
             build_flag: ${{ github.event.inputs.build_win_arm64 }}
@@ -312,116 +191,14 @@ jobs:
             source/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.AppImage.sig
           retention-days: 2
 
-  build-mobile-local:
-    needs: [prepare-local, prepare-cloud]
-    if: always() && (needs.prepare-local.result == 'success' || needs.prepare-cloud.result == 'success')
+  build-mobile:
+    needs: [check-runner, prepare]
     strategy:
       fail-fast: false
       matrix:
         include:
           - platform: android
-            os: self-hosted
-            build_flag: ${{ github.event.inputs.build_android }}
-          - platform: ios
-            os: macos-latest
-            build_flag: ${{ github.event.inputs.build_ios }}
-    runs-on: ${{ matrix.os }}
-    env:
-      GRADLE_OPTS: -Dorg.gradle.jvmargs="-Xmx4096m -XX:MaxMetaspaceSize=1024m"
-    steps:
-      - name: Checkout Source
-        if: matrix.build_flag == 'true'
-        uses: actions/checkout@v4
-        with:
-          repository: dStudios-735453/UniPlan
-          token: ${{ secrets.UNIPLAN_SOURCE_GITHUB }}
-          path: source
-
-      - name: Setup Node
-        if: matrix.build_flag == 'true'
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: "npm"
-          cache-dependency-path: source/package.json
-
-      - name: Install NPM dependencies
-        if: matrix.build_flag == 'true'
-        working-directory: source
-        run: npm install --legacy-peer-deps
-
-      - name: Setup Expo
-        if: matrix.build_flag == 'true'
-        uses: expo/expo-github-action@v8
-        with:
-          expo-version: latest
-          eas-cache: true
-
-      - name: Setup Gradle Cache
-        if: matrix.platform == 'android' && matrix.build_flag == 'true'
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('source/android/**/*.gradle*', 'source/android/gradle/wrapper/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
-      - name: Build Android (Unsigned APK)
-        if: matrix.platform == 'android' && matrix.build_flag == 'true'
-        working-directory: source
-        run: |
-          npx expo prebuild --platform android
-          cd android
-          ./gradlew assembleRelease
-
-      - name: Build iOS (Unsigned .app / Simulator Build)
-        if: matrix.platform == 'ios' && matrix.build_flag == 'true'
-        working-directory: source
-        run: |
-          npx expo prebuild --platform ios
-          # Aggressively disable code signing in the project file
-          sed -i '' 's/DevelopmentTeam = .*/DevelopmentTeam = "";/g' ios/UniPlan.xcodeproj/project.pbxproj
-          sed -i '' 's/CODE_SIGN_STYLE = Automatic;/CODE_SIGN_STYLE = Manual;/g' ios/UniPlan.xcodeproj/project.pbxproj
-          sed -i '' 's/CODE_SIGN_IDENTITY = "Apple Development";/CODE_SIGN_IDENTITY = "";/g' ios/UniPlan.xcodeproj/project.pbxproj
-          sed -i '' 's/CODE_SIGN_IDENTITY\[sdk=iphoneos\*\] = "Apple Development";/CODE_SIGN_IDENTITY = "";/g' ios/UniPlan.xcodeproj/project.pbxproj
-          xcodebuild -workspace ios/UniPlan.xcworkspace -scheme UniPlan -configuration Release -sdk iphoneos -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" EXPANDED_CODE_SIGN_IDENTITY="" -quiet
-
-      - name: Package iOS App
-        if: matrix.platform == 'ios' && matrix.build_flag == 'true'
-        working-directory: source
-        run: |
-          mkdir -p Payload
-          cp -r build/Build/Products/Release-iphoneos/UniPlan.app Payload/
-          zip -r UniPlan-unsigned.ipa Payload
-          rm -rf Payload
-
-      - name: Upload Android Artifact
-        if: matrix.platform == 'android' && matrix.build_flag == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: mobile-build-android-local
-          path: source/android/app/build/outputs/apk/release/*.apk
-          retention-days: 2
-
-      - name: Upload iOS Artifact
-        if: matrix.platform == 'ios' && matrix.build_flag == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: mobile-build-ios-local
-          path: source/UniPlan-unsigned.ipa
-          retention-days: 2
-
-  build-mobile-cloud:
-    needs: [prepare-local, prepare-cloud, build-mobile-local]
-    if: failure() && (needs.prepare-local.result == 'success' || needs.prepare-cloud.result == 'success')
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - platform: android
-            os: ubuntu-latest
+            os: ${{ (needs.check-runner.result == 'success') && 'self-hosted' || 'ubuntu-latest' }}
             build_flag: ${{ github.event.inputs.build_android }}
           - platform: ios
             os: macos-latest
@@ -515,17 +292,8 @@ jobs:
           retention-days: 2
 
   create-release:
-    needs:
-      [
-        prepare-local,
-        prepare-cloud,
-        build-desktop-local,
-        build-desktop-cloud,
-        build-mobile-local,
-        build-mobile-cloud,
-      ]
+    needs: [prepare, build-desktop, build-mobile]
     runs-on: ubuntu-latest
-    if: always() && (needs.prepare-local.result == 'success' || needs.prepare-cloud.result == 'success') && (needs.build-desktop-local.result == 'success' || needs.build-desktop-cloud.result == 'success') && (needs.build-mobile-local.result == 'success' || needs.build-mobile-cloud.result == 'success')
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -536,8 +304,8 @@ jobs:
         id: create_release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ needs.prepare-local.outputs.tag_name || needs.prepare-cloud.outputs.tag_name }}
-          name: ${{ needs.prepare-local.outputs.release_title || needs.prepare-cloud.outputs.release_title }}
+          tag_name: ${{ needs.prepare.outputs.tag_name }}
+          name: ${{ needs.prepare.outputs.release_title }}
           draft: false
           prerelease: ${{ github.event.inputs.build_newest_code == 'true' }}
           files: |
@@ -556,10 +324,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
 
-  update-metadata-local:
-    needs: [prepare-local, prepare-cloud, create-release]
-    runs-on: self-hosted
-    if: github.event.inputs.update_metadata == 'true' && needs.create-release.result == 'success'
+  update-metadata:
+    needs: [check-runner, prepare, create-release]
+    runs-on: ${{ (needs.check-runner.result == 'success') && 'self-hosted' || 'ubuntu-latest' }}
+    if: always() && github.event.inputs.update_metadata == 'true' && needs.create-release.result == 'success'
     steps:
       - name: Checkout Releases Repo
         uses: actions/checkout@v4
@@ -571,9 +339,9 @@ jobs:
 
       - name: Update latest.json
         run: |
-          VERSION="${{ needs.prepare-local.outputs.version || needs.prepare-cloud.outputs.version }}"
+          VERSION="${{ needs.prepare.outputs.version }}"
           PUB_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          TAG="${{ needs.prepare-local.outputs.tag_name || needs.prepare-cloud.outputs.tag_name }}"
+          TAG="${{ needs.prepare.outputs.tag_name }}"
           REPO_URL="https://github.com/${{ github.repository }}/releases/download/${TAG}"
 
           # Helper to extract signature from file
@@ -644,96 +412,5 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add latest.json
-          git commit -m "chore: update latest.json for ${{ needs.prepare-local.outputs.tag_name || needs.prepare-cloud.outputs.tag_name }}"
-          git push
-
-  update-metadata-cloud:
-    needs: [prepare-local, prepare-cloud, create-release, update-metadata-local]
-    runs-on: ubuntu-latest
-    if: failure() && github.event.inputs.update_metadata == 'true' && needs.create-release.result == 'success'
-    steps:
-      - name: Checkout Releases Repo
-        uses: actions/checkout@v4
-
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: all_artifacts
-
-      - name: Update latest.json
-        run: |
-          VERSION="${{ needs.prepare-local.outputs.version || needs.prepare-cloud.outputs.version }}"
-          PUB_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          TAG="${{ needs.prepare-local.outputs.tag_name || needs.prepare-cloud.outputs.tag_name }}"
-          REPO_URL="https://github.com/${{ github.repository }}/releases/download/${TAG}"
-
-          # Helper to extract signature from file
-          get_sig() {
-            local pattern="$1"
-            local sig_file=$(find all_artifacts -name "$pattern" | head -n 1)
-            if [ -f "$sig_file" ]; then
-              cat "$sig_file"
-            else
-              echo ""
-            fi
-          }
-
-          # Helper to get filename for URL
-          get_filename() {
-            local pattern="$1"
-            local file_path=$(find all_artifacts -name "$pattern" | grep -v "\.sig$" | head -n 1)
-            if [ -n "$file_path" ]; then
-              basename "$file_path"
-            else
-              echo ""
-            fi
-          }
-
-          # Get signatures and filenames for each platform
-          W_X64_SIG=$(get_sig "UniPlan*x64*setup.exe.sig")
-          W_X64_FILE=$(get_filename "UniPlan*x64*setup.exe")
-
-          W_ARM_SIG=$(get_sig "UniPlan*arm64*setup.exe.sig")
-          W_ARM_FILE=$(get_filename "UniPlan*arm64*setup.exe")
-
-          D_X64_SIG=$(get_sig "UniPlan*x86_64.app.tar.gz.sig")
-          D_X64_FILE=$(get_filename "UniPlan*x86_64.app.tar.gz")
-
-          D_ARM_SIG=$(get_sig "UniPlan*aarch64.app.tar.gz.sig")
-          D_ARM_FILE=$(get_filename "UniPlan*aarch64.app.tar.gz")
-
-          L_X64_SIG=$(get_sig "UniPlan*amd64.AppImage.sig")
-          L_X64_FILE=$(get_filename "UniPlan*amd64.AppImage")
-
-          L_ARM_SIG=$(get_sig "UniPlan*aarch64.AppImage.sig")
-          L_ARM_FILE=$(get_filename "UniPlan*aarch64.AppImage")
-
-          # Construct the platforms object dynamically
-          PLATFORMS=$(jq -n \
-            --arg w_x64_sig "$W_X64_SIG" --arg w_x64_url "${REPO_URL}/${W_X64_FILE}" \
-            --arg w_arm_sig "$W_ARM_SIG" --arg w_arm_url "${REPO_URL}/${W_ARM_FILE}" \
-            --arg d_x64_sig "$D_X64_SIG" --arg d_x64_url "${REPO_URL}/${D_X64_FILE}" \
-            --arg d_arm_sig "$D_ARM_SIG" --arg d_arm_url "${REPO_URL}/${D_ARM_FILE}" \
-            --arg l_x64_sig "$L_X64_SIG" --arg l_x64_url "${REPO_URL}/${L_X64_FILE}" \
-            --arg l_arm_sig "$L_ARM_SIG" --arg l_arm_url "${REPO_URL}/${L_ARM_FILE}" \
-            '{ 
-              "windows-x86_64": { "signature": $w_x64_sig, "url": $w_x64_url },
-              "windows-aarch64": { "signature": $w_arm_sig, "url": $w_arm_url },
-              "darwin-x86_64": { "signature": $d_x64_sig, "url": $d_x64_url },
-              "darwin-aarch64": { "signature": $d_arm_sig, "url": $d_arm_url },
-              "linux-x86_64": { "signature": $l_x64_sig, "url": $l_x64_url },
-              "linux-aarch64": { "signature": $l_arm_sig, "url": $l_arm_url }
-            }')
-
-          # Update latest.json using jq
-          jq --arg ver "$VERSION" --arg date "$PUB_DATE" --argjson platforms "$PLATFORMS" \
-            '.version = $ver | .pub_date = $date | .platforms = $platforms' \
-            latest.json > latest.json.tmp && mv latest.json.tmp latest.json
-
-      - name: Commit and push changes
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add latest.json
-          git commit -m "chore: update latest.json for ${{ needs.prepare-local.outputs.tag_name || needs.prepare-cloud.outputs.tag_name }}"
+          git commit -m "chore: update latest.json for ${{ needs.prepare.outputs.tag_name }}"
           git push
