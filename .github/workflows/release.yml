@@ -53,15 +53,27 @@ on:
 
 jobs:
   check-runner:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 1
     outputs:
-      status: ${{ steps.check.outcome }}
+      status: ${{ steps.check.outcome.status }}
     steps:
       - id: check
         shell: bash
         continue-on-error: true
-        run: echo "Runner is online"
+        run: |
+          # Check for any online self-hosted runner
+          ONLINE=$(gh api repos/${{ github.repository }}/actions/runners \
+            --jq '.runners[] | select(.labels[].name == "self-hosted" and .status == "online") | .name' | head -n 1)
+
+          if [ -n "$ONLINE" ]; then
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "Runner $ONLINE is online."
+          else
+            echo "status=failure" >> $GITHUB_OUTPUT
+            echo "No self-hosted runners found!"
+            exit 1 # Forces the job to fail immediately
+          fi
 
   prepare:
     needs: check-runner
