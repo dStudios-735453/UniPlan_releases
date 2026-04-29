@@ -59,6 +59,7 @@ jobs:
       status: ${{ steps.check.outcome }}
     steps:
       - id: check
+        shell: bash
         continue-on-error: true
         run: echo "Runner is online"
 
@@ -71,6 +72,7 @@ jobs:
       tag_name: ${{ steps.vars.outputs.tag_name }}
     steps:
       - id: vars
+        shell: bash
         run: |
           VERSION="${{ github.event.inputs.version }}"
           IF_ALPHA="${{ github.event.inputs.build_newest_code }}"
@@ -168,6 +170,7 @@ jobs:
       - name: Build Tauri App
         if: matrix.build_flag == 'true'
         working-directory: source
+        shell: bash
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
@@ -249,6 +252,7 @@ jobs:
       - name: Build Android (Unsigned APK)
         if: matrix.platform == 'android' && matrix.build_flag == 'true'
         working-directory: source
+        shell: bash
         run: |
           npx expo prebuild --platform android
           cd android
@@ -338,6 +342,7 @@ jobs:
           path: all_artifacts
 
       - name: Update latest.json
+        shell: bash
         run: |
           VERSION="${{ needs.prepare.outputs.version }}"
           PUB_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
