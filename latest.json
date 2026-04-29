@@ -1,27 +1,31 @@
 {
   "version": "0.0.1",
   "notes": "Initial alpha releas",
-  "pub_date": "2026-02-17T12:00:00Z",
+  "pub_date": "2026-04-29T20:16:51Z",
   "platforms": {
     "windows-x86_64": {
-      "signature": "<sig from sig file>",
-      "url": "<link to .msi>"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSK0xReVVoMlBhOFl6c3RBMUpadzMrbTNVVWtGMDB1YWFicUY0NDU3a2dkQ3hIQUYzcm5ZK29IQzF2dFBCSUU4OHlPK0dQeldWWTJTMmF0VlQrTW5rREFlNjIrVkxQSXdFPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc3NDkzNzM2CWZpbGU6VW5pUGxhbl8wLjAuMV94NjQtc2V0dXAuZXhlCldiSC9QYnJ2NzNyWWYvbTBMYm54c2QvSkZ2RTNkak5pWDdxd2hNOU0xSEdDUGVKS2N4NzJLa3JHVCtMbmhBMjdxZjZOSXZ0VkZBWkgyT2FWUVpIQkJ3PT0K",
+      "url": "https://github.com/dStudios-735453/UniPlan_releases/releases/download/v29.04.2026-2004/UniPlan_0.0.1_x64-setup.exe"
+    },
+    "windows-aarch64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSK0xReVVoMlBhOFlTdW9admVnZTlrdFk1eVdQbXNTdHBLSkRwWTcra3ZaMGtvK2piYVRneFlWa1R1Y3J3NFJmWDBQSEU1N2I0anZ6aXFpOHhhREFhTVExVE5GK29QVFE0PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc3NDkzNzMzCWZpbGU6VW5pUGxhbl8wLjAuMV9hcm02NC1zZXR1cC5leGUKQkx3YVA2aEZvc1F1Nnp3UDlGWkljZkxTSVNhaGt3ZVRtME5xZGgxZStidlB4QWZMWUhkMFRzWk9sWE11M0FzaDVsNGtlS01LdlU1NHlWYTNaeWtoQVE9PQo=",
+      "url": "https://github.com/dStudios-735453/UniPlan_releases/releases/download/v29.04.2026-2004/UniPlan_0.0.1_arm64-setup.exe"
     },
     "darwin-x86_64": {
-      "signature": "<sig from sig file>",
-      "url": "<link to x86_64 .dmg>"
+      "signature": "",
+      "url": "https://github.com/dStudios-735453/UniPlan_releases/releases/download/v29.04.2026-2004/"
     },
     "darwin-aarch64": {
-      "signature": "<sig from sig file>",
-      "url": "<link to arm .app>"
+      "signature": "",
+      "url": "https://github.com/dStudios-735453/UniPlan_releases/releases/download/v29.04.2026-2004/"
     },
     "linux-x86_64": {
-      "signature": "<sig from sig file>",
-      "url": "<link to appimage>"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSK0xReVVoMlBhOFR4R1F6aEJiN2d4VW9GRGRGUlV5WWt1RW5rMGJ3NU1pbllidzU1VHlDdGtFbG1wUTJCclRCdjNadVpqbkN0Q1NWY3U5NWNnNGNNUmNtaVZDTmtsZ3dVPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc3NDkzNTI0CWZpbGU6VW5pUGxhbl8wLjAuMV9hbWQ2NC5BcHBJbWFnZQpvVXpqT2tzVHpkamlldE5ZRmJQemIvWkdUK3JiQy9uaFFTNjNlMDJWY3FPMUxXdVczN0psdGd2SG90R0ZXV0hqaE5LUk12WFN5K0tHQ2dUby9zbFZDUT09Cg==",
+      "url": "https://github.com/dStudios-735453/UniPlan_releases/releases/download/v29.04.2026-2004/UniPlan_0.0.1_amd64.AppImage"
     },
     "linux-aarch64": {
-      "signature": "<sig from sig file>",
-      "url": "<link to arm appimage>"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSK0xReVVoMlBhOFZFV2R4OWF3cEp1UEY3SWFxcnB6ZG5NQ3JncUdEWUhmVWJraHo1NXd3clNnNXNoWCt5MXNMQUlBMFdUWmtybmt4MEYzclJBVVVUbytQMUYwNjZkQmdRPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc3NDkzNjIxCWZpbGU6VW5pUGxhbl8wLjAuMV9hYXJjaDY0LkFwcEltYWdlCkhsWVpmeUtCRU0rd3lZRmhoclZEVjMycGdWOVVTRC9QRFREa3BSUGwvQUxxRzFPT1pyTFZEV1RVMXZ1TGFUZk9uWDIxSGYwTllhTGxobEUwVXhDZURnPT0K",
+      "url": "https://github.com/dStudios-735453/UniPlan_releases/releases/download/v29.04.2026-2004/UniPlan_0.0.1_aarch64.AppImage"
     }
   }
 }
