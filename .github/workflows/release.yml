@@ -55,6 +55,9 @@ jobs:
   check-runner:
     runs-on: ubuntu-latest
     timeout-minutes: 1
+    permissions:
+      contents: read
+      actions: read
     outputs:
       status: ${{ steps.check.outcome.status }}
     steps:
