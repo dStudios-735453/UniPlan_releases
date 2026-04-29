@@ -113,7 +113,7 @@ jobs:
             arch: x86_64
             target: x86_64-pc-windows-msvc
             build_flag: ${{ github.event.inputs.build_win_x64 }}
-          - platform: win_x64
+          - platform: win_arm64
             os: ${{ (needs.check-runner.result == 'success') && 'self-hosted' || 'windows-latest' }}
             arch: arm64
             target: aarch64-pc-windows-msvc
@@ -192,7 +192,7 @@ jobs:
         if: matrix.build_flag == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: tauri-build-${{ matrix.platform }}-cloud
+          name: tauri-build-${{ matrix.platform }}
           path: |
             source/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.msi
             source/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.msi.sig
@@ -295,7 +295,7 @@ jobs:
         if: matrix.platform == 'android' && matrix.build_flag == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: mobile-build-android-cloud
+          name: mobile-build-android
           path: source/android/app/build/outputs/apk/release/*.apk
           retention-days: 2
 
@@ -303,7 +303,7 @@ jobs:
         if: matrix.platform == 'ios' && matrix.build_flag == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: mobile-build-ios-cloud
+          name: mobile-build-ios
           path: source/UniPlan-unsigned.ipa
           retention-days: 2
 
