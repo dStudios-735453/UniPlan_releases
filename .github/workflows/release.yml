@@ -13,7 +13,7 @@ on:
       build_newest_code:
         description: "Build from latest code (alpha release)"
         type: boolean
-        default: false
+        default: true
       build_android:
         description: "Build Android APK"
         type: boolean
@@ -48,30 +48,8 @@ on:
         default: true
 
 jobs:
-  check-runner:
-    runs-on: ubuntu-latest
-    outputs:
-      status: ${{ steps.check.outputs.status }}
-    steps:
-      - id: check
-        shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.RUNNERACCESS }}
-        run: |
-          ONLINE=$(gh api repos/${{ github.repository }}/actions/runners \
-            --jq '.runners[] | select(.labels[].name == "self-hosted" and .status == "online") | .name' | head -n 1)
-
-          if [ -n "$ONLINE" ]; then
-            echo "status=success" >> $GITHUB_OUTPUT
-            echo "Runner $ONLINE is online."
-          else
-            echo "status=failure" >> $GITHUB_OUTPUT
-            echo "No self-hosted runners found!"
-          fi
-
   prepare:
-    needs: check-runner
-    runs-on: ${{ (needs.check-runner.outputs.status == 'success') && 'self-hosted' || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.vars.outputs.version }}
       release_title: ${{ steps.vars.outputs.release_title }}
@@ -97,18 +75,18 @@ jobs:
           echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
 
   build-desktop:
-    needs: [check-runner, prepare]
+    needs: prepare
     strategy:
       fail-fast: false
       matrix:
         include:
           - platform: win_x64
-            os: ${{ (needs.check-runner.outputs.status == 'success') && 'self-hosted' || 'windows-latest' }}
+            os: windows-latest
             arch: x86_64
             target: x86_64-pc-windows-msvc
             build_flag: ${{ github.event.inputs.build_win_x64 }}
           - platform: win_arm64
-            os: ${{ (needs.check-runner.outputs.status == 'success') && 'self-hosted' || 'windows-latest' }}
+            os: windows-latest
             arch: arm64
             target: aarch64-pc-windows-msvc
             build_flag: ${{ github.event.inputs.build_win_arm64 }}
@@ -195,16 +173,18 @@ jobs:
             source/src-tauri/target/universal-apple-darwin/release/bundle/**/*.app.tar.gz.sig
             source/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.AppImage
             source/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.AppImage.sig
+            source/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.deb
+            source/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.rpm
           retention-days: 2
 
   build-mobile:
-    needs: [check-runner, prepare]
+    needs: prepare
     strategy:
       fail-fast: false
       matrix:
         include:
           - platform: android
-            os: ${{ (needs.check-runner.outputs.status == 'success') && 'self-hosted' || 'ubuntu-latest' }}
+            os: ubuntu-latest
             build_flag: ${{ github.event.inputs.build_android }}
           - platform: ios
             os: macos-latest
@@ -298,7 +278,7 @@ jobs:
           retention-days: 2
 
   create-release:
-    needs: [check-runner, prepare, build-desktop, build-mobile]
+    needs: [prepare, build-desktop, build-mobile]
     runs-on: ubuntu-latest
     steps:
       - name: Download all artifacts
@@ -324,14 +304,16 @@ jobs:
             artifacts/**/*.app.tar.gz.sig
             artifacts/**/*.AppImage
             artifacts/**/*.AppImage.sig
+            artifacts/**/*.deb
+            artifacts/**/*.rpm
             artifacts/**/*.apk
             artifacts/**/*.ipa
         env:
           GITHUB_TOKEN: ${{ github.token }}
 
   update-metadata:
-    needs: [check-runner, prepare, create-release]
-    runs-on: ${{ (needs.check-runner.outputs.status == 'success') && 'self-hosted' || 'ubuntu-latest' }}
+    needs: [prepare, create-release]
+    runs-on: ubuntu-latest
     if: github.event.inputs.update_metadata == 'true' && needs.create-release.result == 'success'
     steps:
       - name: Checkout Releases Repo
