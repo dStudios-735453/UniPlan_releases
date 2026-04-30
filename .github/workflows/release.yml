@@ -30,12 +30,8 @@ on:
         description: "Build Windows ARM64"
         type: boolean
         default: true
-      build_mac_x64:
-        description: "Build macOS x64"
-        type: boolean
-        default: true
-      build_mac_arm64:
-        description: "Build macOS ARM64"
+      build_mac_universal:
+        description: "Build macOS"
         type: boolean
         default: true
       build_linux_x64:
@@ -54,13 +50,11 @@ on:
 jobs:
   check-runner:
     runs-on: ubuntu-latest
-    timeout-minutes: 1
     outputs:
-      status: ${{ steps.check.outcome.status }}
+      status: ${{ steps.check.outputs.status }}
     steps:
       - id: check
         shell: bash
-        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.RUNNERACCESS }}
         run: |
@@ -73,7 +67,6 @@ jobs:
           else
             echo "status=failure" >> $GITHUB_OUTPUT
             echo "No self-hosted runners found!"
-            exit 1 # Forces the job to fail immediately
           fi
 
   prepare:
@@ -119,16 +112,11 @@ jobs:
             arch: arm64
             target: aarch64-pc-windows-msvc
             build_flag: ${{ github.event.inputs.build_win_arm64 }}
-          - platform: mac_x64
+          - platform: mac_universal
             os: macos-latest
-            arch: x86_64
-            target: x86_64-apple-darwin
-            build_flag: ${{ github.event.inputs.build_mac_x64 }}
-          - platform: mac_arm64
-            os: macos-latest
-            arch: aarch64
-            target: aarch64-apple-darwin
-            build_flag: ${{ github.event.inputs.build_mac_arm64 }}
+            arch: arm64
+            target: universal-apple-darwin
+            build_flag: ${{ github.event.inputs.build_mac_universal }}
           - platform: linux_x64
             os: ubuntu-latest
             arch: x86_64
@@ -153,7 +141,6 @@ jobs:
         if: matrix.build_flag == 'true'
         uses: actions/setup-node@v4
         with:
-          node-version: 25
           cache: "npm"
           cache-dependency-path: source/package.json
 
@@ -161,7 +148,10 @@ jobs:
         if: matrix.build_flag == 'true'
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.target }}
+          targets: >-
+            ${{ matrix.platform == 'mac_universal'
+              && 'aarch64-apple-darwin,x86_64-apple-darwin'
+              || matrix.target }}
 
       - name: Rust Cache
         if: matrix.build_flag == 'true'
@@ -199,10 +189,10 @@ jobs:
             source/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.msi.sig
             source/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.exe
             source/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.exe.sig
-            source/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.dmg
-            source/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.app
-            source/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.app.tar.gz
-            source/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.app.tar.gz.sig
+            source/src-tauri/target/universal-apple-darwin/release/bundle/**/*.dmg
+            source/src-tauri/target/universal-apple-darwin/release/bundle/**/*.app
+            source/src-tauri/target/universal-apple-darwin/release/bundle/**/*.app.tar.gz
+            source/src-tauri/target/universal-apple-darwin/release/bundle/**/*.app.tar.gz.sig
             source/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.AppImage
             source/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.AppImage.sig
           retention-days: 2
@@ -235,7 +225,6 @@ jobs:
         if: matrix.build_flag == 'true'
         uses: actions/setup-node@v4
         with:
-          node-version: 24
           cache: "npm"
           cache-dependency-path: source/package.json
 
@@ -309,7 +298,7 @@ jobs:
           retention-days: 2
 
   create-release:
-    needs: [prepare, build-desktop, build-mobile]
+    needs: [check-runner, prepare, build-desktop, build-mobile]
     runs-on: ubuntu-latest
     steps:
       - name: Download all artifacts
@@ -331,7 +320,6 @@ jobs:
             artifacts/**/*.exe
             artifacts/**/*.exe.sig
             artifacts/**/*.dmg
-            artifacts/**/*.app
             artifacts/**/*.app.tar.gz
             artifacts/**/*.app.tar.gz.sig
             artifacts/**/*.AppImage
@@ -344,7 +332,7 @@ jobs:
   update-metadata:
     needs: [check-runner, prepare, create-release]
     runs-on: ${{ (needs.check-runner.outputs.status == 'success') && 'self-hosted' || 'ubuntu-latest' }}
-    if: always() && github.event.inputs.update_metadata == 'true' && needs.create-release.result == 'success'
+    if: github.event.inputs.update_metadata == 'true' && needs.create-release.result == 'success'
     steps:
       - name: Checkout Releases Repo
         uses: actions/checkout@v4
@@ -385,18 +373,18 @@ jobs:
           }
 
           # Get signatures and filenames for each platform
+          # Windows
           W_X64_SIG=$(get_sig "UniPlan*x64*setup.exe.sig")
           W_X64_FILE=$(get_filename "UniPlan*x64*setup.exe")
 
           W_ARM_SIG=$(get_sig "UniPlan*arm64*setup.exe.sig")
           W_ARM_FILE=$(get_filename "UniPlan*arm64*setup.exe")
 
-          D_X64_SIG=$(get_sig "UniPlan*x86_64.app.tar.gz.sig")
-          D_X64_FILE=$(get_filename "UniPlan*x86_64.app.tar.gz")
+          # MacOS
+          M_UNI_SIG=$(get_sig "*.app.tar.gz.sig")
+          M_UNI_FILE=$(get_filename "*.app.tar.gz")
 
-          D_ARM_SIG=$(get_sig "UniPlan*aarch64.app.tar.gz.sig")
-          D_ARM_FILE=$(get_filename "UniPlan*aarch64.app.tar.gz")
-
+          # Linux
           L_X64_SIG=$(get_sig "UniPlan*amd64.AppImage.sig")
           L_X64_FILE=$(get_filename "UniPlan*amd64.AppImage")
 
@@ -407,15 +395,13 @@ jobs:
           PLATFORMS=$(jq -n \
             --arg w_x64_sig "$W_X64_SIG" --arg w_x64_url "${REPO_URL}/${W_X64_FILE}" \
             --arg w_arm_sig "$W_ARM_SIG" --arg w_arm_url "${REPO_URL}/${W_ARM_FILE}" \
-            --arg d_x64_sig "$D_X64_SIG" --arg d_x64_url "${REPO_URL}/${D_X64_FILE}" \
-            --arg d_arm_sig "$D_ARM_SIG" --arg d_arm_url "${REPO_URL}/${D_ARM_FILE}" \
+            --arg m_uni_sig "$M_UNI_SIG" --arg m_uni_url "${REPO_URL}/${M_UNI_FILE}" \
             --arg l_x64_sig "$L_X64_SIG" --arg l_x64_url "${REPO_URL}/${L_X64_FILE}" \
             --arg l_arm_sig "$L_ARM_SIG" --arg l_arm_url "${REPO_URL}/${L_ARM_FILE}" \
-            '{ 
+            '{
               "windows-x86_64": { "signature": $w_x64_sig, "url": $w_x64_url },
               "windows-aarch64": { "signature": $w_arm_sig, "url": $w_arm_url },
-              "darwin-x86_64": { "signature": $d_x64_sig, "url": $d_x64_url },
-              "darwin-aarch64": { "signature": $d_arm_sig, "url": $d_arm_url },
+              "darwin-universal": { "signature": $m_uni_sig, "url": $m_uni_url },
               "linux-x86_64": { "signature": $l_x64_sig, "url": $l_x64_url },
               "linux-aarch64": { "signature": $l_arm_sig, "url": $l_arm_url }
             }')
