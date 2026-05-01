@@ -54,6 +54,7 @@ jobs:
       version: ${{ steps.vars.outputs.version }}
       release_title: ${{ steps.vars.outputs.release_title }}
       tag_name: ${{ steps.vars.outputs.tag_name }}
+      source_ref: ${{ steps.vars.outputs.source_ref }}
     steps:
       - id: vars
         shell: bash
@@ -65,14 +66,17 @@ jobs:
           if [ "$IF_ALPHA" = "true" ]; then
             RELEASE_TITLE="${DATE_TIME}"
             TAG_NAME="v${DATE_TIME}"
+            SOURCE_REF="main"
           else
             RELEASE_TITLE="v$VERSION"
             TAG_NAME="v$VERSION"
+            SOURCE_REF="v$VERSION"
           fi
 
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "release_title=$RELEASE_TITLE" >> $GITHUB_OUTPUT
           echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+          echo "source_ref=$SOURCE_REF" >> $GITHUB_OUTPUT
 
   build-desktop:
     needs: prepare
@@ -114,6 +118,7 @@ jobs:
           repository: dStudios-735453/UniPlan
           token: ${{ secrets.UNIPLAN_SOURCE_GITHUB }}
           path: source
+          ref: ${{ needs.prepare.outputs.source_ref }}
 
       - name: Setup Node
         if: matrix.build_flag == 'true'
@@ -200,6 +205,7 @@ jobs:
           repository: dStudios-735453/UniPlan
           token: ${{ secrets.UNIPLAN_SOURCE_GITHUB }}
           path: source
+          ref: ${{ needs.prepare.outputs.source_ref }}
 
       - name: Setup Node
         if: matrix.build_flag == 'true'
