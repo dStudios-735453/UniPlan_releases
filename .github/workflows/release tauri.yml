@@ -1,0 +1,186 @@
+name: Build and Release UniPlan (tauri)
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_win_x64:
+        description: "Build Windows x64"
+        type: boolean
+        default: true
+      build_win_arm64:
+        description: "Build Windows ARM64"
+        type: boolean
+        default: true
+      build_mac_universal:
+        description: "Build macOS"
+        type: boolean
+        default: true
+      build_linux_x64:
+        description: "Build Linux x64"
+        type: boolean
+        default: true
+      build_linux_arm64:
+        description: "Build Linux ARM64"
+        type: boolean
+        default: true
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.vars.outputs.version }}
+      release_title: ${{ steps.vars.outputs.release_title }}
+      tag_name: ${{ steps.vars.outputs.tag_name }}
+    steps:
+      - id: vars
+        shell: bash
+        run: |
+          DATE_TIME=$(date +'%d.%m.%Y-%H%M')
+
+          RELEASE_TITLE="${DATE_TIME}"
+          TAG_NAME="v${DATE_TIME}"
+          VERSION="${DATE_TIME}"
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "release_title=$RELEASE_TITLE" >> $GITHUB_OUTPUT
+          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+
+  build-desktop:
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: win_x64
+            os: windows-latest
+            arch: x86_64
+            target: x86_64-pc-windows-msvc
+            build_flag: ${{ github.event.inputs.build_win_x64 }}
+          - platform: win_arm64
+            os: windows-latest
+            arch: arm64
+            target: aarch64-pc-windows-msvc
+            build_flag: ${{ github.event.inputs.build_win_arm64 }}
+          - platform: mac_universal
+            os: macos-latest
+            arch: arm64
+            target: universal-apple-darwin
+            build_flag: ${{ github.event.inputs.build_mac_universal }}
+          - platform: linux_x64
+            os: ubuntu-latest
+            arch: x86_64
+            target: x86_64-unknown-linux-gnu
+            build_flag: ${{ github.event.inputs.build_linux_x64 }}
+          - platform: linux_arm64
+            os: ubuntu-24.04-arm
+            arch: aarch64
+            target: aarch64-unknown-linux-gnu
+            build_flag: ${{ github.event.inputs.build_linux_arm64 }}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout Source
+        if: matrix.build_flag == 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: dStudios-735453/UniPlan
+          token: ${{ secrets.UNIPLAN_SOURCE_GITHUB }}
+          path: source
+
+      - name: Setup Node
+        if: matrix.build_flag == 'true'
+        uses: actions/setup-node@v4
+        with:
+          cache: "npm"
+          cache-dependency-path: source/package.json
+
+      - name: Install Rust
+        if: matrix.build_flag == 'true'
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: >-
+            ${{ matrix.platform == 'mac_universal'
+              && 'aarch64-apple-darwin,x86_64-apple-darwin'
+              || matrix.target }}
+
+      - name: Rust Cache
+        if: matrix.build_flag == 'true'
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: source/src-tauri -> target
+
+      - name: Install Linux dependencies
+        if: (matrix.os == 'ubuntu-latest' || matrix.os == 'ubuntu-24.04-arm') && matrix.build_flag == 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: Install NPM dependencies
+        if: matrix.build_flag == 'true'
+        working-directory: source
+        run: npm install --legacy-peer-deps
+
+      - name: Build Tauri App
+        if: matrix.build_flag == 'true'
+        working-directory: source
+        shell: bash
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: npx tauri build --target ${{ matrix.target }}
+
+      - name: Upload Artifacts
+        if: matrix.build_flag == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: tauri-build-${{ matrix.platform }}
+          path: |
+            source/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.msi
+            source/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.msi.sig
+            source/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.exe
+            source/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.exe.sig
+            source/src-tauri/target/universal-apple-darwin/release/bundle/**/*.dmg
+            source/src-tauri/target/universal-apple-darwin/release/bundle/**/*.app
+            source/src-tauri/target/universal-apple-darwin/release/bundle/**/*.app.tar.gz
+            source/src-tauri/target/universal-apple-darwin/release/bundle/**/*.app.tar.gz.sig
+            source/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.AppImage
+            source/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.AppImage.sig
+            source/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.deb
+            source/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.rpm
+          retention-days: 2
+
+  create-release:
+    needs: [prepare, build-desktop]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.prepare.outputs.tag_name }}
+          name: ${{ needs.prepare.outputs.release_title }}
+          draft: false
+          prerelease: true
+          files: |
+            artifacts/**/*.msi
+            artifacts/**/*.msi.sig
+            artifacts/**/*.exe
+            artifacts/**/*.exe.sig
+            artifacts/**/*.dmg
+            artifacts/**/*.app.tar.gz
+            artifacts/**/*.app.tar.gz.sig
+            artifacts/**/*.AppImage
+            artifacts/**/*.AppImage.sig
+            artifacts/**/*.deb
+            artifacts/**/*.rpm
+            artifacts/**/*.apk
+            artifacts/**/*.ipa
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
