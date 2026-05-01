@@ -137,8 +137,6 @@ jobs:
         with:
           name: tauri-build-${{ matrix.platform }}
           path: |
-            source/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.msi
-            source/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.msi.sig
             source/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.exe
             source/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.exe.sig
             source/src-tauri/target/universal-apple-darwin/release/bundle/**/*.dmg
@@ -169,8 +167,6 @@ jobs:
           draft: false
           prerelease: true
           files: |
-            artifacts/**/*.msi
-            artifacts/**/*.msi.sig
             artifacts/**/*.exe
             artifacts/**/*.exe.sig
             artifacts/**/*.dmg

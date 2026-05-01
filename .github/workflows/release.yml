@@ -168,8 +168,6 @@ jobs:
         with:
           name: tauri-build-${{ matrix.platform }}
           path: |
-            source/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.msi
-            source/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.msi.sig
             source/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.exe
             source/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.exe.sig
             source/src-tauri/target/universal-apple-darwin/release/bundle/**/*.dmg
@@ -301,8 +299,6 @@ jobs:
           draft: false
           prerelease: ${{ github.event.inputs.build_newest_code == 'true' }}
           files: |
-            artifacts/**/*.msi
-            artifacts/**/*.msi.sig
             artifacts/**/*.exe
             artifacts/**/*.exe.sig
             artifacts/**/*.dmg
@@ -343,7 +339,7 @@ jobs:
             local pattern="$1"
             local sig_file=$(find all_artifacts -name "$pattern" | head -n 1)
             if [ -f "$sig_file" ]; then
-              cat "$sig_file"
+              base64 -d "$sig_file" | sed -n '4p' | tr -d '\r\n '
             else
               echo ""
             fi
