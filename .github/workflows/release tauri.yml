@@ -136,7 +136,7 @@ jobs:
         working-directory: source/src-tauri/target/universal-apple-darwin/release/bundle/macos
         shell: bash
         run: |
-          rm -rf *.dmg
+          rm -rf ../dmg/*.dmg
           npm install --global create-dmg
           find . -name "*.app" -exec create-dmg --no-code-sign {} \;
 
