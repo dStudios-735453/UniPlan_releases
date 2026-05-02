@@ -60,7 +60,7 @@ jobs:
             target: x86_64-pc-windows-msvc
             build_flag: ${{ github.event.inputs.build_win_x64 }}
           - platform: win_arm64
-            os: windows-latest
+            os: windows-11-arm
             arch: arm64
             target: aarch64-pc-windows-msvc
             build_flag: ${{ github.event.inputs.build_win_arm64 }}
