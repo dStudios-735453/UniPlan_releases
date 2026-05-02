@@ -131,6 +131,14 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: npx tauri build --target ${{ matrix.target }}
 
+      - name: Build dmg
+        if: matrix.build_flag == 'true' && matrix.os == 'macos-latest'
+        working-directory: source/src-tauri/target/universal-apple-darwin/release/bundle/macos
+        shell: bash
+        run: rm -rf *.dmg
+          brew install create-dmg
+          find -name "*.app" -exec create-dmg --no-code-sign '{}' \;
+
       - name: Upload Artifacts
         if: matrix.build_flag == 'true'
         uses: actions/upload-artifact@v4
