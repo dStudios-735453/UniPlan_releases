@@ -168,8 +168,8 @@ jobs:
         shell: bash
         run: |
           rm -rf *.dmg
-          brew install create-dmg
-          find -name "*.app" -exec create-dmg --no-code-sign '{}' \;
+          npm install --global create-dmg
+          mdfind -name ".app" | xargs -I {} create-dmg --no-code-sign "{}"
 
       - name: Upload Artifacts
         if: matrix.build_flag == 'true'
