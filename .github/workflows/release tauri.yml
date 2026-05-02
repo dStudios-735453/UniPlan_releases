@@ -138,7 +138,7 @@ jobs:
         run: |
           rm -rf *.dmg
           npm install --global create-dmg
-          mdfind -name ".app" | xargs -I {} create-dmg --no-code-sign "{}"
+          find . -name "*.app" -exec create-dmg --no-code-sign {} \;
 
       - name: Upload Artifacts
         if: matrix.build_flag == 'true'
