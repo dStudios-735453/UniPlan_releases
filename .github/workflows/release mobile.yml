@@ -99,30 +99,33 @@ jobs:
           cd android
           ./gradlew assembleRelease
 
-      - name: Build iOS (Unsigned .app / Simulator Build)
+      - name: Build iOS for LiveContainer
         if: matrix.platform == 'ios' && matrix.build_flag == 'true'
         working-directory: source
         run: |
           npx expo prebuild --platform ios
-          xcodebuild -workspace ios/UniPlan.xcworkspace \
+
+          xcodebuild archive -workspace ios/UniPlan.xcworkspace \
             -scheme UniPlan \
             -configuration Release \
             -sdk iphoneos \
-            -derivedDataPath build \
+            -archivePath build/UniPlan.xcarchive \
             CODE_SIGNING_ALLOWED=YES \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="-" \
             AD_HOC_CODE_SIGNING_ALLOWED=YES \
-            SWIFT_VERSION=5.0 \
-            OTHER_SWIFT_FLAGS="-DEXPO_SWIFT_MACROS"
+            OTHER_SWIFT_FLAGS="-force-ast-verifier -Xfrontend -disable-strict-concurrency -Xfrontend -disable-implicit-concurrency-module-import" \
+            GCC_PREPROCESSOR_DEFINITIONS='$inherited AD_HOC_SIGNED=1' \
+            -quiet
 
       - name: Package iOS App
         if: matrix.platform == 'ios' && matrix.build_flag == 'true'
         working-directory: source
         run: |
           mkdir -p Payload
-          cp -r build/Build/Products/Release-iphoneos/UniPlan.app Payload/
+          cp -r build/UniPlan.xcarchive/Products/Applications/UniPlan.app Payload/
           zip -r UniPlan-unsigned.ipa Payload
+          rm -rf Payload
 
       - name: Upload Android Artifact
         if: matrix.platform == 'android' && matrix.build_flag == 'true'
