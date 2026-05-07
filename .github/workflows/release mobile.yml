@@ -113,7 +113,9 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="-" \
             AD_HOC_CODE_SIGNING_ALLOWED=YES \
-            -quiet
+            SWIFT_VERSION=5.0 \
+            OTHER_SWIFT_FLAGS="-DEXPO_SWIFT_MACROS"
+
       - name: Package iOS App
         if: matrix.platform == 'ios' && matrix.build_flag == 'true'
         working-directory: source
