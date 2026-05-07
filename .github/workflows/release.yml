@@ -258,13 +258,16 @@ jobs:
         working-directory: source
         run: |
           npx expo prebuild --platform ios
-          # Aggressively disable code signing in the project file
-          sed -i '' 's/DevelopmentTeam = .*/DevelopmentTeam = "";/g' ios/UniPlan.xcodeproj/project.pbxproj
-          sed -i '' 's/CODE_SIGN_STYLE = Automatic;/CODE_SIGN_STYLE = Manual;/g' ios/UniPlan.xcodeproj/project.pbxproj
-          sed -i '' 's/CODE_SIGN_IDENTITY = "Apple Development";/CODE_SIGN_IDENTITY = "";/g' ios/UniPlan.xcodeproj/project.pbxproj
-          sed -i '' 's/CODE_SIGN_IDENTITY\[sdk=iphoneos\*\] = "Apple Development";/CODE_SIGN_IDENTITY = "";/g' ios/UniPlan.xcodeproj/project.pbxproj
-          xcodebuild -workspace ios/UniPlan.xcworkspace -scheme UniPlan -configuration Release -sdk iphoneos -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" EXPANDED_CODE_SIGN_IDENTITY="" -quiet
-
+          xcodebuild -workspace ios/UniPlan.xcworkspace \
+            -scheme UniPlan \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=YES \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="-" \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES \
+            -quiet
       - name: Package iOS App
         if: matrix.platform == 'ios' && matrix.build_flag == 'true'
         working-directory: source
@@ -272,7 +275,7 @@ jobs:
           mkdir -p Payload
           cp -r build/Build/Products/Release-iphoneos/UniPlan.app Payload/
           zip -r UniPlan-unsigned.ipa Payload
-          rm -rf Payload
+
 
       - name: Upload Android Artifact
         if: matrix.platform == 'android' && matrix.build_flag == 'true'
