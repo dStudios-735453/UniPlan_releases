@@ -1,8 +1,5 @@
 name: Build and Release UniPlan (mobile)
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 on:
   workflow_dispatch:
     inputs:
@@ -54,7 +51,7 @@ jobs:
     steps:
       - name: Checkout Source
         if: matrix.build_flag == 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: dStudios-735453/UniPlan
           token: ${{ secrets.UNIPLAN_SOURCE_GITHUB }}
@@ -62,7 +59,7 @@ jobs:
 
       - name: Setup Node
         if: matrix.build_flag == 'true'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           cache: "npm"
           cache-dependency-path: source/package.json
@@ -70,7 +67,7 @@ jobs:
       - name: Install NPM dependencies
         if: matrix.build_flag == 'true'
         working-directory: source
-        run: npm install --legacy-peer-deps
+        run: npm install
 
       - name: Setup Expo
         if: matrix.build_flag == 'true'
@@ -81,7 +78,7 @@ jobs:
 
       - name: Setup Gradle Cache
         if: matrix.platform == 'android' && matrix.build_flag == 'true'
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.gradle/caches
@@ -99,24 +96,18 @@ jobs:
           cd android
           ./gradlew assembleRelease
 
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: "26.2"
+
       - name: Build iOS
         if: matrix.platform == 'ios' && matrix.build_flag == 'true'
         working-directory: source
         run: |
           npx expo prebuild --platform ios
+          cd ios && pod install && cd ..
 
-          xcodebuild archive -workspace ios/UniPlan.xcworkspace \
-          -scheme UniPlan \
-          -configuration Release \
-          -sdk iphoneos \
-          -archivePath build/UniPlan.xcarchive \
-          CODE_SIGNING_ALLOWED=YES \
-          CODE_SIGNING_REQUIRED=NO \
-          CODE_SIGN_IDENTITY="-" \
-          AD_HOC_CODE_SIGNING_ALLOWED=YES \
-          SWIFT_STRICT_CONCURRENCY=minimal \
-          GCC_PREPROCESSOR_DEFINITIONS='$inherited AD_HOC_SIGNED=1' \
-          -quiet
+          set -o pipefail && xcodebuild archive -workspace ios/UniPlan.xcworkspace -archivePath build/UniPlan.xcarchive -scheme UniPlan -sdk iphoneos -arch arm64 -configuration Release | xcpretty
 
       - name: Package iOS App
         if: matrix.platform == 'ios' && matrix.build_flag == 'true'
@@ -129,7 +120,7 @@ jobs:
 
       - name: Upload Android Artifact
         if: matrix.platform == 'android' && matrix.build_flag == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: mobile-build-android
           path: source/android/app/build/outputs/apk/release/*.apk
@@ -137,7 +128,7 @@ jobs:
 
       - name: Upload iOS Artifact
         if: matrix.platform == 'ios' && matrix.build_flag == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: mobile-build-ios
           path: source/UniPlan-unsigned.ipa
@@ -148,13 +139,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: artifacts
 
       - name: Create Release
         id: create_release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ needs.prepare.outputs.tag_name }}
           name: ${{ needs.prepare.outputs.release_title }}
