@@ -96,18 +96,16 @@ jobs:
           cd android
           ./gradlew assembleRelease
 
-      - uses: maxim-lobanov/setup-xcode@v1
+      - name: Prepare xcode
+        if: matrix.platform == 'ios' && matrix.build_flag == 'true'
+        uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: "26.2"
 
       - name: Build iOS
         if: matrix.platform == 'ios' && matrix.build_flag == 'true'
         working-directory: source
-        run: |
-          npx expo prebuild --platform ios
-          cd ios && pod install && cd ..
-
-          set -o pipefail && xcodebuild archive -workspace ios/UniPlan.xcworkspace -archivePath build/UniPlan.xcarchive -scheme UniPlan -sdk iphoneos -arch arm64 -configuration Release | xcpretty
+        run: npx expo run:ios --configuration Release
 
       - name: Package iOS App
         if: matrix.platform == 'ios' && matrix.build_flag == 'true'
