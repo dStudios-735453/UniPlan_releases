@@ -1,0 +1,33 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.12.0.schema.json
+
+PackageIdentifier: dStudios.UniPlan # The package unique identifier
+PackageVersion: 0.0.1 # The package version
+PackageLocale: en-US # The package meta-data locale
+Publisher: dStudios # The publisher name
+PublisherUrl: https://www.dstudios.org # Optional publisher home page
+PublisherSupportUrl: # Optional publisher support page
+#PrivacyUrl: x # Optional publisher privacy page
+Author: dStudios # Optional author
+PackageName: UniPlan # The package name
+PackageUrl: https://uniplan.dstudios.org # Optional package home page
+License: Proprietary # The package license
+#LicenseUrl: x # Optional package license page
+Copyright: © 2026 dStudios # Optional package copyright
+#CopyrightUrl: x # Optional package copyright page
+ShortDescription: An all-in-one academic planner for students # The short package description
+Description: UniPlan is a comprehensive academic planner built with React Native Expo and Tauri. It is designed to help students manage their academic lives by tracking classes, homework and to-do items # Optional full package description
+Moniker: uniplan # Optional most common package term
+Tags: # Optional list of package terms
+  - calendar
+  - schedule
+  - planner
+  - tasks
+  - todo
+  - productivity
+  - uniplan
+Agreements: # Optional package agreements
+  - AgreementLabel: EULA # Optional agreement label
+#    AgreementUrl: x # Optional agreement URL
+#ReleaseNotesUrl: x # Optional release notes URL
+ManifestType: defaultLocale # The manifest type
+ManifestVersion: 1.12.0 # The manifest syntax version

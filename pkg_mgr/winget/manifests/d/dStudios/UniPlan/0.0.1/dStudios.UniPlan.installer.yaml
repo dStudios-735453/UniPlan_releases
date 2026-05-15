@@ -1,0 +1,69 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.installer.1.12.0.schema.json
+
+PackageIdentifier: dStudios.UniPlan # The package unique identifier
+PackageVersion: 0.0.1 # The package version
+Installers: # The list of package installers
+  - Architecture: x64 # The architecture of the installer
+    InstallerLocale: en-US # Optional locale of the installer
+    MinimumOSVersion: 10.0.17134.0 # Optional installer minimum operating system version
+    InstallerType: nullsoft # The installer type
+    InstallerUrl: https://github.com/dStudios-735453/UniPlan_releases/releases/download/v01.05.2026-0806/UniPlan_0.0.1_x64-setup.exe # The installer URL
+    InstallerSha256: 4BE92F168060C5BEC8A0835F1BADBB0B026F76087C8DE2AAA0FE0B3BE6C1529C # The SHA256 hash of the installer
+    Scope: user # Optional installer scope
+    InstallModes: # Optional installer modes
+      - silent
+      - silentWithProgress
+    InstallerSwitches: # Optional installer switches
+      Silent: /S # Optional installer switches for silent
+      SilentWithProgress: /S # Optional installer switches for silent with progress
+      Repair: /S # Optional installer switches to use when repairing the package installation
+    UpgradeBehavior: install # Optional upgrade method
+    Dependencies: # Optional list of dependencies required by the package
+      PackageDependencies: # Optional list of package dependencies
+        - PackageIdentifier: Microsoft.EdgeWebView2Runtime
+    ElevationRequirement: elevationProhibited # Optional scope required to install package
+    ProductCode: UniPlan # Optional product code of the installer
+    AppsAndFeaturesEntries: # Optional entries from the Add and Remove Programs (ARP) table
+      - DisplayName: UniPlan # Optional program name shown in the ARP entry
+        DisplayVersion: 0.0.1 # Optional version displayed in the ARP entry
+        Publisher: dStudios # Optional publisher displayed in the ARP entry
+        ProductCode: UniPlan # Optional product code of the installer
+        InstallerType: nullsoft # Optional installer type
+    UnsupportedArguments: # Optional list of Windows Package Manager Client arguments the installer does not support
+      - log
+      - location
+    ReleaseDate: 2026-05-15 # Optional release date
+    RepairBehavior: installer # Optional repair method to use with 'winget repair`
+  - Architecture: arm64 # The architecture of the installer
+    InstallerLocale: en-US # Optional locale of the installer
+    MinimumOSVersion: 10.0.17134.0 # Optional installer minimum operating system version
+    InstallerType: nullsoft # The installer type
+    InstallerUrl: https://github.com/dStudios-735453/UniPlan_releases/releases/download/v01.05.2026-0806/UniPlan_0.0.1_arm64-setup.exe # The installer URL
+    InstallerSha256: 1ABBA177BD7988277662E4EC532F1DBE583124EA472E34E1397EBBC7239C2284 # The SHA256 hash of the installer
+    Scope: user # Optional installer scope
+    InstallModes: # Optional installer modes
+      - silent
+      - silentWithProgress
+    InstallerSwitches: # Optional installer switches
+      Silent: /S # Optional installer switches for silent
+      SilentWithProgress: /S # Optional installer switches for silent with progress
+      Repair: /S # Optional installer switches to use when repairing the package installation
+    UpgradeBehavior: install # Optional upgrade method
+    Dependencies: # Optional list of dependencies required by the package
+      PackageDependencies: # Optional list of package dependencies
+        - PackageIdentifier: Microsoft.EdgeWebView2Runtime
+    ElevationRequirement: elevationProhibited # Optional scope required to install package
+    ProductCode: UniPlan # Optional product code of the installer
+    AppsAndFeaturesEntries: # Optional entries from the Add and Remove Programs (ARP) table
+      - DisplayName: UniPlan # Optional program name shown in the ARP entry
+        DisplayVersion: 0.0.1 # Optional version displayed in the ARP entry
+        Publisher: dStudios # Optional publisher displayed in the ARP entry
+        ProductCode: UniPlan # Optional product code of the installer
+        InstallerType: nullsoft # Optional installer type
+    UnsupportedArguments: # Optional list of Windows Package Manager Client arguments the installer does not support
+      - log
+      - location
+    ReleaseDate: 2026-05-15 # Optional release date
+    RepairBehavior: installer # Optional repair method to use with 'winget repair`
+ManifestType: installer # The manifest type
+ManifestVersion: 1.12.0 # The manifest syntax version

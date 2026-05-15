@@ -1,0 +1,7 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.version.1.12.0.schema.json
+
+PackageIdentifier: dStudios.UniPlan # The package unique identifier
+PackageVersion: 0.0.1 # The package version
+DefaultLocale: en-US # The default package meta-data locale
+ManifestType: version # The manifest type
+ManifestVersion: 1.12.0 # The manifest syntax version
