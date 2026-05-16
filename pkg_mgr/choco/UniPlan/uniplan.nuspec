@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>uniplan</id>
+    <version>0.0.1</version>
+    <owners>dStudios</owners>
+    <title>UniPlan</title>
+    <authors>David 735453</authors>
+    <projectUrl>https://uniplan.dstudios.org</projectUrl>
+    <iconUrl>https://raw.githubusercontent.com/dStudios-735453/UniPlan_releases/main/favicon.png</iconUrl>
+    <copyright>© 2026 dStudios</copyright>
+    <!--<licenseUrl>x</licenseUrl> -->
+    <!--<requireLicenseAcceptance>true</requireLicenseAcceptance> -->
+    <tags>uniplan calendar schedule planner tasks todo productivity student academic</tags>
+    <summary>An all-in-one academic planner for students</summary>
+    <description>UniPlan is a comprehensive academic planner built with React Native Expo and Tauri. It is designed to help students manage their academic lives by tracking classes, homework and to-do items.</description>
+    <!-- <releaseNotes>x</releaseNotes> -->
+    <dependencies>
+      <dependency id="webview2-runtime" />
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="tools\**" target="tools" />
+  </files>
+</package>
