@@ -167,20 +167,21 @@ jobs:
       - name: Generate SHA-256 Checksums
         id: checksums
         run: |
-          echo "### SHA-256 Checksums" > checksums.txt
-          echo "|\`File\`| \`SHA-256 Hash\` |" >> checksums.txt
-          echo "|---|---|" >> checksums.txt
+          echo -e "### SHA-256 Checksums\n| Filename | SHA-256 Checksum |\n| --- | --- |" > checksums.txt
 
-          find artifacts/ -type f | while read -r file; do
-            filename=$(basename "$file")
-            sha=$(sha256sum "$file" | awk '{print $1}')
-            echo "| $filename | \`$sha\` |" >> checksums.txt
+          shopt -s globstar nullglob
+          for file in artifacts/**/*.{deb,tar.gz,dmg,exe,rpm,AppImage}; do
+            [ -f "$file" ] || continue
+            sha=$(sha256sum "$file")
+            echo "| $(basename "$file") | \`${sha%% *}\` |" >> checksums.txt
           done
 
           EOF=$(dd if=/dev/urandom bs=15 count=1 2>/dev/null | base64 | tr -dc 'a-zA-Z0-9')
-          echo "hashes<<$EOF" >> $GITHUB_OUTPUT
-          cat checksums.txt >> $GITHUB_OUTPUT
-          echo "$EOF" >> $GITHUB_OUTPUT
+          {
+            echo "hashes<<$EOF"
+            cat checksums.txt
+            echo "$EOF"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Create Release
         id: create_release
