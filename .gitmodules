@@ -1,4 +1,4 @@
-[submodule "UniPlan_releases"]
+[submodule "winget-pkgs"]
 	path = pkg_mgr\\winget-pkgs
 	url = https://github.com/dStudios-735453/winget-pkgs
 	branch = master

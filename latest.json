@@ -4,23 +4,23 @@
   "platforms": {
     "windows-x86_64": {
       "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSK0xReVVoMlBhOGNSTkJZNE4wZ3ZIYlZXdms2Tld3M3ZkdGpkZ09LaUFucUJPekplZEovQXhRbFlXVXM0TFp5dzI1VVZPREdGYUExNnZCUWJzcjUvNjdRK3hCLzJMSFFVPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc3NTgwNjY5CWZpbGU6VW5pUGxhbl8wLjAuMV94NjQtc2V0dXAuZXhlCnBNSUxzMzd6TUpad09pYlZYV1BKR29NTnVMWDFFZk93OVI4Zm9rNHhUQjRWam5MQ3JaczdWbUF2a1VHWGZCbU9NNnlVTExmSm8xd3BuQWlxUDU0bkJ3PT0K",
-      "url": "https://github.com/dStudios-735453/UniPlan_releases/releases/download/v30.04.2026-2013/UniPlan_0.0.1_x64-setup.exe"
+      "url": "https://github.com/dStudios-735453/UniPlan_Releases/releases/download/v30.04.2026-2013/UniPlan_0.0.1_x64-setup.exe"
     },
     "windows-aarch64": {
       "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSK0xReVVoMlBhOFlDd1BMZ0NNd2NmaE45YVdncWdid3JweENBZjRZblZrUUh2czc4Qmp6dFBBMmJFY0QrVUc4ZTVEMlZEZVpEM1ZRcWtaTFk5R0hVVXQvNWczYmNrckE4PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc3NTgwNjc5CWZpbGU6VW5pUGxhbl8wLjAuMV9hcm02NC1zZXR1cC5leGUKcTFjT3R0ekdEM1FIZGdsVlhvNU81R0RxNFV6MG01RnlMajN4SXZLUHFhN29Ua2E5ejVhbTV2WlN5cHp3ampVeDg2aFlTMDZlRGQrTXk0Qkk4YjRrQ1E9PQo=",
-      "url": "https://github.com/dStudios-735453/UniPlan_releases/releases/download/v30.04.2026-2013/UniPlan_0.0.1_arm64-setup.exe"
+      "url": "https://github.com/dStudios-735453/UniPlan_Releases/releases/download/v30.04.2026-2013/UniPlan_0.0.1_arm64-setup.exe"
     },
     "darwin-universal": {
       "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSK0xReVVoMlBhOFpWVjAxbFdTYzB4V1QwZ29hUk9PejBtSDQrR1VIZTZlSDB6SEkrTkJNd2EvWlk1N1FFdXZyM0t0cjQyRHdBK2FYaldZZmRHR0k1WnFja2VXZXBMSVFvPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc3NTgwMjY3CWZpbGU6VW5pUGxhbi5hcHAudGFyLmd6Ck10UDJsY2YxK0tGb00wYTQyMFZ1M0grNFlTT3VObUEzaDVUdVJ0TDl4STBpaDlxem1Ib21MSzZDQVIzTWh2VnVXMXA5YjFENEp4OXRldnB4RGprZEJ3PT0K",
-      "url": "https://github.com/dStudios-735453/UniPlan_releases/releases/download/v30.04.2026-2013/UniPlan.app.tar.gz"
+      "url": "https://github.com/dStudios-735453/UniPlan_Releases/releases/download/v30.04.2026-2013/UniPlan.app.tar.gz"
     },
     "linux-x86_64": {
       "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSK0xReVVoMlBhOFZJOW5JbFJRVTVoTVRuOCs5Y3FHTHhXeXNhRDR3KzFRMG9KWlZpc0RXZ3JMK2tJNURhWGRnMGZUdVNZRnBONWpGV25hZ3NHK3MrT2RCbWlIRUVWdlFJPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc3NTgwMzU1CWZpbGU6VW5pUGxhbl8wLjAuMV9hbWQ2NC5BcHBJbWFnZQphYUJmdXliYlRJQzZNY1hudDJkZTFXUS9ZcXNGeUpRSlo5eW9YQXltWWtCWUZ4NHJHbldEM3FxQ0hGdzBCdVYyUW9SNCt5MWNleGZ1dTVpWXl3TUtBdz09Cg==",
-      "url": "https://github.com/dStudios-735453/UniPlan_releases/releases/download/v30.04.2026-2013/UniPlan_0.0.1_amd64.AppImage"
+      "url": "https://github.com/dStudios-735453/UniPlan_Releases/releases/download/v30.04.2026-2013/UniPlan_0.0.1_amd64.AppImage"
     },
     "linux-aarch64": {
       "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSK0xReVVoMlBhOFFhY3dlc0JjZ3NQTzRmekNSZUVJZTdzektWQmlhb2JoRUpLb0taRHBJOEY1Q055YlduamRIalRPbjNYak1WQWNtS2xBeWpvSWR3djlvNHlnN3M2YWdvPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc3NTgwNDUwCWZpbGU6VW5pUGxhbl8wLjAuMV9hYXJjaDY0LkFwcEltYWdlCk5qSHBqVUNheDZtNnpTODQ3TE1reVl4dVJ5YXh3NnRtTmlZLzhyVXUrbFJueWFXYU9Sd0xRUno5QTV4SmRKRFJZajNDb3ZJNko1UlVkYW5yelhBM0FnPT0K",
-      "url": "https://github.com/dStudios-735453/UniPlan_releases/releases/download/v30.04.2026-2013/UniPlan_0.0.1_aarch64.AppImage"
+      "url": "https://github.com/dStudios-735453/UniPlan_Releases/releases/download/v30.04.2026-2013/UniPlan_0.0.1_aarch64.AppImage"
     }
   }
 }
