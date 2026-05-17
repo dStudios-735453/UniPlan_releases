@@ -1,6 +1,4 @@
 ﻿$ErrorActionPreference = 'Stop'
-$toolsDir   = "$(Split-Path -parent $MyInvocation.MyCommand.Definition)"
-
 
 $os = Get-CimInstance -ClassName Win32_OperatingSystem
 $architecture = $os.OSArchitecture

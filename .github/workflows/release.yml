@@ -148,8 +148,7 @@ jobs:
       - name: Install NPM dependencies
         if: matrix.build_flag == 'true'
         working-directory: source
-        run: npm install --legacy-peer-deps
-
+        run: npm install
       - name: Build Tauri App
         if: matrix.build_flag == 'true'
         working-directory: source
