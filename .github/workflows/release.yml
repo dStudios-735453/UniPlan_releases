@@ -260,9 +260,8 @@ jobs:
         if: matrix.platform == 'ios' && matrix.build_flag == 'true'
         working-directory: source
         run: |
-          npx expo prebuild --platform ios
-
-          set -o pipefail && xcodebuild archive -workspace ios/UniPlan.xcworkspace -archivePath build/UniPlan.xcarchive -scheme UniPlan -sdk iphoneos -arch arm64 -configuration Release | xcpretty
+          echo "not working"
+          exit 1
 
       - name: Package iOS App
         if: matrix.platform == 'ios' && matrix.build_flag == 'true'
@@ -298,6 +297,24 @@ jobs:
         with:
           path: artifacts
 
+      - name: Generate SHA-256 Checksums
+        id: checksums
+        run: |
+          echo "### SHA-256 Checksums" > checksums.txt
+          echo "|\`File\`| \`SHA-256 Hash\` |" >> checksums.txt
+          echo "|---|---|" >> checksums.txt
+
+          find artifacts/ -type f ! -name "*.apk" ! -name "*.ipa" | while read -r file; do
+            filename=$(basename "$file")
+            sha=$(sha256sum "$file" | awk '{print $1}')
+            echo "| $filename | \`$sha\` |" >> checksums.txt
+          done
+
+          EOF=$(dd if=/dev/urandom bs=15 count=1 2>/dev/null | base64 | tr -dc 'a-zA-Z0-9')
+          echo "hashes<<$EOF" >> $GITHUB_OUTPUT
+          cat checksums.txt >> $GITHUB_OUTPUT
+          echo "$EOF" >> $GITHUB_OUTPUT
+
       - name: Create Release
         id: create_release
         uses: softprops/action-gh-release@v3
@@ -306,6 +323,7 @@ jobs:
           name: ${{ needs.prepare.outputs.release_title }}
           draft: false
           prerelease: ${{ github.event.inputs.build_newest_code == 'true' }}
+          body: ${{ steps.checksums.outputs.hashes }}
           files: |
             artifacts/**/*.exe
             artifacts/**/*.exe.sig

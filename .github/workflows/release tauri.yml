@@ -164,12 +164,31 @@ jobs:
         with:
           path: artifacts
 
+      - name: Generate SHA-256 Checksums
+        id: checksums
+        run: |
+          echo "### SHA-256 Checksums" > checksums.txt
+          echo "|\`File\`| \`SHA-256 Hash\` |" >> checksums.txt
+          echo "|---|---|" >> checksums.txt
+
+          find artifacts/ -type f | while read -r file; do
+            filename=$(basename "$file")
+            sha=$(sha256sum "$file" | awk '{print $1}')
+            echo "| $filename | \`$sha\` |" >> checksums.txt
+          done
+
+          EOF=$(dd if=/dev/urandom bs=15 count=1 2>/dev/null | base64 | tr -dc 'a-zA-Z0-9')
+          echo "hashes<<$EOF" >> $GITHUB_OUTPUT
+          cat checksums.txt >> $GITHUB_OUTPUT
+          echo "$EOF" >> $GITHUB_OUTPUT
+
       - name: Create Release
         id: create_release
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ needs.prepare.outputs.tag_name }}
           name: ${{ needs.prepare.outputs.release_title }}
+          body: ${{ steps.checksums.outputs.hashes }}
           draft: false
           prerelease: true
           files: |
@@ -182,7 +201,5 @@ jobs:
             artifacts/**/*.AppImage.sig
             artifacts/**/*.deb
             artifacts/**/*.rpm
-            artifacts/**/*.apk
-            artifacts/**/*.ipa
         env:
           GITHUB_TOKEN: ${{ github.token }}
