@@ -76,16 +76,9 @@ jobs:
           expo-version: latest
           eas-cache: true
 
-      - name: Setup Gradle Cache
+      - name: Setup Gradle
         if: matrix.platform == 'android' && matrix.build_flag == 'true'
-        uses: actions/cache@v5
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('source/android/**/*.gradle*', 'source/android/gradle/wrapper/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Build Android (Unsigned APK)
         if: matrix.platform == 'android' && matrix.build_flag == 'true'
