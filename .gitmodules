@@ -1,9 +1,9 @@
 [submodule "winget-pkgs"]
-	path = pkg_mgr\\winget-pkgs
+	path = pkg_mgr\\windows\\winget-pkgs
 	url = https://github.com/dStudios-735453/winget-pkgs
 	branch = master
 
 [submodule "Scoop_Extras"]
-	path = pkg_mgr\\scoop
+	path = pkg_mgr\\windows\\scoop
 	url = https://github.com/dStudios-735453/Scoop_Extras
 	branch = master
