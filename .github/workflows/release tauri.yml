@@ -6,23 +6,23 @@ on:
       build_win_x64:
         description: "Build Windows x64"
         type: boolean
-        default: true
+        default: false
       build_win_arm64:
         description: "Build Windows ARM64"
         type: boolean
-        default: true
+        default: false
       build_mac_universal:
         description: "Build macOS"
         type: boolean
-        default: true
+        default: false
       build_linux_x64:
         description: "Build Linux x64"
         type: boolean
-        default: true
+        default: false
       build_linux_arm64:
         description: "Build Linux ARM64"
         type: boolean
-        default: true
+        default: false
 
 jobs:
   prepare:
@@ -37,9 +37,26 @@ jobs:
         run: |
           DATE_TIME=$(date +'%d.%m.%Y-%H%M')
 
-          RELEASE_TITLE="${DATE_TIME}"
-          TAG_NAME="v${DATE_TIME}"
-          VERSION="${DATE_TIME}"
+          if [[ "${{ github.event.inputs.build_win_x64 }}" == "true" && "${{ github.event.inputs.build_win_arm64 }}" == "true" ]]; then
+            VERSION="${DATE_TIME}_win"
+          elif [[ "${{ github.event.inputs.build_linux_x64 }}" == "true" && "${{ github.event.inputs.build_linux_arm64 }}" == "true" ]]; then
+            VERSION="${DATE_TIME}_linux"
+          elif [ "${{ github.event.inputs.build_win_arm64 }}" == "true" ]; then
+            VERSION="${DATE_TIME}_win_arm64"
+          elif [ "${{ github.event.inputs.build_win_x64 }}" == "true" ]; then
+            VERSION="${DATE_TIME}_win_x64"
+          elif [ "${{ github.event.inputs.build_linux_arm64 }}" == "true" ]; then
+            VERSION="${DATE_TIME}_linux_arm64"
+          elif [ "${{ github.event.inputs.build_mac_universal }}" == "true" ]; then
+            VERSION="${DATE_TIME}_mac"
+          elif [ "${{ github.event.inputs.build_linux_x64 }}" == "true" ]; then
+            VERSION="${DATE_TIME}_linux_x64"
+          else
+            VERSION="${DATE_TIME}_tauri"
+          fi
+
+          RELEASE_TITLE="${VERSION}"
+          TAG_NAME="v${VERSION}"
 
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "release_title=$RELEASE_TITLE" >> $GITHUB_OUTPUT

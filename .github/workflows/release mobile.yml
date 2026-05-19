@@ -6,11 +6,11 @@ on:
       build_android:
         description: "Build Android APK"
         type: boolean
-        default: true
+        default: false
       build_ios:
         description: "Build iOS IPA"
         type: boolean
-        default: true
+        default: false
 
 jobs:
   prepare:
@@ -27,7 +27,13 @@ jobs:
 
           RELEASE_TITLE="${DATE_TIME}"
           TAG_NAME="v${DATE_TIME}"
-          VERSION="${DATE_TIME}"
+          if [ "${{ github.event.inputs.build_android }}" == "true" ]; then
+            VERSION="${DATE_TIME}_android"
+          elif [ "${{ github.event.inputs.build_ios }}" == "true" ]; then
+            VERSION="${DATE_TIME}_iOS"
+          else
+            VERSION="${DATE_TIME}_mobile"
+          fi
 
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "release_title=$RELEASE_TITLE" >> $GITHUB_OUTPUT
